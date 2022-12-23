@@ -1,92 +1,55 @@
 {
-    "ipcMode": null,
-    "executionRoleArn": null,
-    "containerDefinitions": [
-      {
-        "dnsSearchDomains": null,
-        "environmentFiles": null,
-        "logConfiguration": null,
-        "entryPoint": [],
-        "portMappings": [
-          {
-            "hostPort": 0,
-            "protocol": "tcp",
-            "containerPort": 80
-          }
-        ],
-        "command": [],
-        "linuxParameters": null,
-        "cpu": 2048,
-        "environment": [
-          {
-            "name": "APP_KEY",
-            "value": "base64:LBARhwFJGGY3RvhTxAiZyQ8aH5UYgxSMgfh9Uur49Xc="
-          }
-        ],
-        "resourceRequirements": null,
-        "ulimits": null,
-        "dnsServers": null,
-        "mountPoints": [],
-        "workingDirectory": null,
-        "secrets": null,
-        "dockerSecurityOptions": null,
-        "memory": 1024,
-        "memoryReservation": 1024,
-        "volumesFrom": [],
-        "stopTimeout": null,
-        "image": "305991065279.dkr.ecr.us-east-1.amazonaws.com/adminstaffs",
-        "startTimeout": null,
-        "firelensConfiguration": null,
-        "dependsOn": null,
-        "disableNetworking": null,
-        "interactive": null,
-        "healthCheck": null,
-        "essential": true,
-        "links": null,
-        "hostname": null,
-        "extraHosts": null,
-        "pseudoTerminal": null,
-        "user": null,
-        "readonlyRootFilesystem": null,
-        "dockerLabels": null,
-        "systemControls": null,
-        "privileged": null,
-        "name": "adminstaffs"
-      }
-    ],
-    "placementConstraints": [],
-    "memory": "2048",
-    "taskRoleArn": null,
-    "compatibilities": [
-      "EXTERNAL",
-      "EC2"
-    ],
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:305991065279:task-definition/adminstaffs:1",
-    "family": "adminstaffs",
-    "requiresAttributes": [
-      {
-        "targetId": null,
-        "targetType": null,
-        "value": null,
-        "name": "com.amazonaws.ecs.capability.ecr-auth"
-      },
-      {
-        "targetId": null,
-        "targetType": null,
-        "value": null,
-        "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
-      }
-    ],
-    "pidMode": null,
     "requiresCompatibilities": [
-      "EC2"
+        "EC2"
     ],
+    "inferenceAccelerators": [],
+    "containerDefinitions": [
+        {
+            "name": "adminstaffs",
+            "image": "305991065279.dkr.ecr.us-east-1.amazonaws.com/adminstaffs",
+            "memory": "1024",
+            "memoryReservation": "1024",
+            "cpu": "2048",
+            "resourceRequirements": null,
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": "0",
+                    "containerPort": "80",
+                    "protocol": "tcp"
+                }
+            ],
+            "entryPoint": [],
+            "command": [],
+            "environment": [
+                {
+                    "name": "APP_KEY",
+                    "value": "base64:LBARhwFJGGY3RvhTxAiZyQ8aH5UYgxSMgfh9Uur49Xc="
+                }
+            ],
+            "environmentFiles": [],
+            "secrets": null,
+            "mountPoints": null,
+            "volumesFrom": null,
+            "hostname": null,
+            "user": null,
+            "workingDirectory": null,
+            "extraHosts": null,
+            "logConfiguration": null,
+            "ulimits": null,
+            "dockerLabels": null,
+            "dependsOn": null,
+            "repositoryCredentials": {
+                "credentialsParameter": ""
+            }
+        }
+    ],
+    "volumes": [],
     "networkMode": "bridge",
-    "runtimePlatform": null,
-    "cpu": "2048",
-    "revision": 1,
-    "status": "ACTIVE",
-    "inferenceAccelerators": null,
-    "proxyConfiguration": null,
-    "volumes": []
-  }
+    "memory": "2GB",
+    "cpu": "2 vCPU",
+    "placementConstraints": [],
+    "family": "adminstaffs",
+    "taskRoleArn": "",
+    "tags": []
+}
