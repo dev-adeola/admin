@@ -1,63 +1,151 @@
-FROM php:7.4-apache
+FROM php:8.1-fpm
 
-WORKDIR /var/www/html
+MAINTAINER support@cyber-duck.co.uk
 
-ARG WWWGROUP
+ENV COMPOSER_MEMORY_LIMIT='-1'
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ=UTC
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN apt-get update && apt-get install -y \
-        libpng-dev \
-        zlib1g-dev \
-        libxml2-dev \
+RUN apt-get update && \
+    apt-get install -y --force-yes --no-install-recommends \
+        libmemcached-dev \
         libzip-dev \
-        libonig-dev \
-        zip \
-        curl \
-        unzip \
-        libmagickwand-dev --no-install-recommends \
-        supervisor \
-        ghostscript \
-        libfreetype6-dev \
-        libjpeg62-turbo-dev \
+        libz-dev \
+        libzip-dev \
+        libpq-dev \
+        libjpeg-dev \
         libpng-dev \
-        libc-client-dev libkrb5-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo_mysql \
-    && docker-php-ext-install mysqli \
-    && docker-php-ext-install zip \
-    && docker-php-ext-install mbstring \
-    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
-    && docker-php-ext-install -j$(nproc) imap \
-    && mkdir -p /usr/src/php/ext/imagick \
-    && curl -fsSL https://github.com/Imagick/imagick/archive/06116aa24b76edaf6b1693198f79e6c295eda8a9.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1 \
-    && docker-php-ext-install imagick \
-    && docker-php-source delete
+        libfreetype6-dev \
+        libssl-dev \
+        openssh-server \
+        libmagickwand-dev \
+        git \
+        cron \
+        nano \
+        libxml2-dev \
+        libreadline-dev \
+        libgmp-dev \
+        mariadb-client \
+        unzip
 
-RUN sed -i '/disable ghostscript format types/,+6d' /etc/ImageMagick-6/policy.xml
-   
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    
-COPY vhost.conf /etc/apache2/sites-available/000-default.conf
+# Install soap extention
+RUN docker-php-ext-install soap
 
-RUN groupadd --force -g $WWWGROUP sail
+# Install for image manipulation
+RUN docker-php-ext-install exif
 
-RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 sail
+# Install the PHP pcntl extention
+RUN docker-php-ext-install pcntl
 
-RUN chown -R sail:$WWWGROUP /var/www/html \
-    && a2enmod rewrite \
-    && a2enmod headers
+# Install the PHP zip extention
+RUN docker-php-ext-install zip
 
-COPY start-container /usr/local/bin/start-container
+# Install the PHP pdo_mysql extention
+RUN docker-php-ext-install pdo_mysql
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Install the PHP pdo_pgsql extention
+RUN docker-php-ext-install pdo_pgsql
 
-COPY php.ini /usr/local/etc/php/php.ini
+# Install the PHP bcmath extension
+RUN docker-php-ext-install bcmath
 
-RUN chmod +x /usr/local/bin/start-container
-    
-ENTRYPOINT ["start-container"]
+# Install the PHP intl extention
+RUN docker-php-ext-install intl
+
+# Install the PHP gmp extention
+RUN docker-php-ext-install gmp
+
+#####################################
+# PHPRedis:
+#####################################
+RUN pecl install redis && docker-php-ext-enable redis
+
+#####################################
+# Imagick:
+#####################################
+
+RUN pecl install imagick && \
+    docker-php-ext-enable imagick
+
+#####################################
+# GD:
+#####################################
+
+# Install the PHP gd library
+RUN docker-php-ext-install gd && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install gd
+
+#####################################
+# xDebug:
+#####################################
+
+# Install the xdebug extension
+RUN pecl install xdebug
+
+#####################################
+# PHP Memcached:
+#####################################
+
+# Install the php memcached extension
+RUN pecl install memcached && docker-php-ext-enable memcached
+
+#####################################
+# Composer:
+#####################################
+
+# Install composer and add its bin to the PATH.
+RUN curl -s http://getcomposer.org/installer | php && \
+    echo "export PATH=${PATH}:/var/www/vendor/bin" >> ~/.bashrc && \
+    mv composer.phar /usr/local/bin/composer
+# Source the bash
+RUN . ~/.bashrc
+
+#####################################
+# Laravel Schedule Cron Job:
+#####################################
+
+RUN echo "* * * * * www-data /usr/local/bin/php /var/www/artisan schedule:run >> /dev/null 2>&1"  >> /etc/cron.d/laravel-scheduler
+RUN chmod 0644 /etc/cron.d/laravel-scheduler
+
+#
+#--------------------------------------------------------------------------
+# Final Touch
+#--------------------------------------------------------------------------
+#
+
+ADD ./laravel.ini /usr/local/etc/php/conf.d
+
+#####################################
+# Aliases:
+#####################################
+# docker-compose exec php-fpm dep --> locally installed Deployer binaries
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/vendor/bin/dep "$@"' > /usr/bin/dep
+RUN chmod +x /usr/bin/dep
+# docker-compose exec php-fpm art --> php artisan
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/artisan "$@"' > /usr/bin/art
+RUN chmod +x /usr/bin/art
+# docker-compose exec php-fpm migrate --> php artisan migrate
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/artisan migrate "$@"' > /usr/bin/migrate
+RUN chmod +x /usr/bin/migrate
+# docker-compose exec php-fpm fresh --> php artisan migrate:fresh --seed
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/artisan migrate:fresh --seed' > /usr/bin/fresh
+RUN chmod +x /usr/bin/fresh
+# docker-compose exec php-fpm t --> run the tests for the project and generate testdox
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/artisan config:clear\n/var/www/vendor/bin/phpunit -d memory_limit=2G --stop-on-error --stop-on-failure --testdox-text=tests/report.txt "$@"' > /usr/bin/t
+RUN chmod +x /usr/bin/t
+# docker-compose exec php-fpm d --> run the Laravel Dusk browser tests for the project
+RUN echo '#!/bin/bash\n/usr/local/bin/php /var/www/artisan config:clear\n/bin/bash\n/usr/local/bin/php /var/www/artisan dusk -d memory_limit=2G --stop-on-error --stop-on-failure --testdox-text=tests/report-dusk.txt "$@"' > /usr/bin/d
+RUN chmod +x /usr/bin/d
+
+RUN rm -r /var/lib/apt/lists/*
+
+RUN usermod -u 1000 www-data
+
+WORKDIR /var/www
+
+COPY ./docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN ln -s /usr/local/bin/docker-entrypoint.sh /
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+EXPOSE 9000
+CMD ["php-fpm"]
