@@ -38,22 +38,25 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/admin-task",
+                    "awslogs-group": "/ecs/admin",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 }
             },
             "ulimits": null,
             "dockerLabels": null,
-            "dependsOn": null
+            "dependsOn": null,
+            "repositoryCredentials": {
+                "credentialsParameter": ""
+            }
         }
     ],
     "volumes": [],
     "networkMode": "bridge",
-    "memory": "4 gb",
-    "cpu": "4 vcpu",
+    "memory": "2 gb",
+    "cpu": "2 vcpu",
     "placementConstraints": [],
-    "family": "admin-task",
+    "family": "admin",
     "taskRoleArn": "",
     "executionRoleArn": "arn:aws:iam::305991065279:role/ecsTaskExecutionRole",
     "tags": []
